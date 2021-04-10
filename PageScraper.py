@@ -20,7 +20,8 @@ class PageScraper:
         self.links    += self.find_links(page_content)
 
         for tag in HTML_TAGS:
-            self.tags.update( self.find_tag(tag) )
+            if tag:
+                self.tags.update( self.find_tag(tag) )
 
 
     def find_links(self, page_content):
