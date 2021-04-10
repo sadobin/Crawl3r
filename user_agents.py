@@ -68,26 +68,4 @@ USER_AGENTS = {
 
     },
 
-#    'safari': {
-#
-#        'linux' : {
-#            '': '',
-#        },
-#
-#        'win' : {
-#            '': '',
-#        },
-#
-#        'android' : {
-#            '': '',
-#        },
-#
-#        'ios' : {
-#            '': '',
-#        },
-#
-#        'mac' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15',
-#
-#    }
-
 }
