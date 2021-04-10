@@ -11,7 +11,6 @@ REQUEST_HEADERS = {
     'Host': 'TARGET',
     'User-Agent': 'ff',
     'Accept': '*/*',
-    'Accept-Encoding': '',
     'Connection': 'keep-alive',
 
 }
