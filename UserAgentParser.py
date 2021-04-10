@@ -1,7 +1,9 @@
 #! /usr/bin/python3 
 
-from USER_AGENTS import USER_AGENTS
+from user_agents import USER_AGENTS
 import sys
+
+available_ua = "Available: fu, fd, ff, fc, f7, f10, fan, fm, fi, cu, cf, ca, can, cm, ci, e7, e10, ean, em, ei"
 
 
 class UserAgentParser :
@@ -35,20 +37,14 @@ class UserAgentParser :
 
     def __init__(self, useragent):
         
-        self.err       = "[!] Unsupported __STR__"
-        self.available = "[+] Available: fu, fd, ff, fc, f7, f10, fan, fm, fi, cu, cf, ca, can, cm, ci, e7, e10, ean, em, ei"
         self.useragent = useragent.lower()
         self.user_agent_parser()
 
-        ######### DEBUGGING #########
-        # print( USER_AGENTS['firefox']['ubuntu'] )
-        # print(USER_AGENTS['chrome'])
-        # print(USER_AGENTS['edge'])
-        ######### END-DEBUGGING #########
-    
 
     def user_agent_parser(self):
-
+        """
+                Set User-Agent to default value from user_agents.py file, if specified user agent does not valid.
+        """
         if not self.useragent:
             self.useragent =  USER_AGENTS['default']
             return
@@ -62,12 +58,10 @@ class UserAgentParser :
         else:
             self.useragent = USER_AGENTS['default']
             return
-            #print( self.err.replace('__STR__', 'browser') )
-            #print( self.available )
-            #sys.exit(1)
+
 
         if   platform == 'u': platform = 'ubuntu'
-        elif platform == 'f': platform = 'firefox'
+        elif platform == 'f': platform = 'fedora'
         elif platform == 'c': platform = 'centos'
         elif platform == 'd': platform = 'debian'
         elif platform == 'a': platform = 'arch'
@@ -79,9 +73,6 @@ class UserAgentParser :
         else: 
             self.useragent = USER_AGENTS['default']
             return
-            #print( self.err.replace('__STR__', 'platform') )
-            #print( self.available )
-            #sys.exit(1)
         
         ######### DEBUGGING #########
         #print(browser)
@@ -89,6 +80,10 @@ class UserAgentParser :
         ######### END-DEBUGGING #########
 
         self.useragent = USER_AGENTS[browser][platform]
+
+    
+    def get_user_agent(self):
+        return self.useragent
 
 
 ######### DEBUGGING ##########
