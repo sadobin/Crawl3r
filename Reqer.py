@@ -18,7 +18,6 @@
 
 from HeadersParser import RequestHeadersParser, ResponseHeadersParser
 from PageScraper   import PageScraper
-from config        import REQUEST_HEADERS
 import requests as req
 import re
 import sys
@@ -41,7 +40,7 @@ class Reqer:
 		self.host   = target
 		self.prepare_addresses()
 
-		req_hp = RequestHeadersParser(self.host, REQUEST_HEADERS)
+		req_hp = RequestHeadersParser(self.host)
 		self.request_headers = req_hp.get_headers()
 
 		self.do_request()
@@ -61,9 +60,12 @@ class Reqer:
 			while got_redirect:
 
 				response = req.get(self.target, headers=self.request_headers, allow_redirects=False)
-				self.response_processor(response)
-				self.redirection_handler(response)
 				got_redirect = response.is_redirect
+
+				self.response_processor(response)
+
+				if got_redirect:
+					self.redirection_handler(response)
 
 		except Exception as e:
 			print(e)
@@ -103,8 +105,9 @@ class Reqer:
 				- Change the value of the Host header
 		"""
 
-		self.target = response.headers['location']
-		self.host   = response.headers['location']
+		if response.headers.get('location'):
+			self.target = response.headers.get('location')
+			self.host   = response.headers.get('location') if re.match('http(s?):\/\/', response.headers.get('location')) else self.host
 
 		self.prepare_addresses()
 		self.request_headers['Host'] = self.host
@@ -119,8 +122,7 @@ class Reqer:
 				- Adding protocol schema to self.target
 		"""
 
-		if self.target[-1] == '/':
-			self.target = self.target[:-1]
+		if self.host[-1] == '/':
 			self.host   = self.host[:-1]
 
 		pattern = "^http(s?)://"
