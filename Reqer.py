@@ -89,11 +89,11 @@ class Reqer:
 		tags     = ps.get_tags()
 
 		self.result[response.request.url] = {}
-		self.result[response.request.url]['status-code'] = response.status_code
-		self.result[response.request.url]['req-headers'] = request_headers
-		self.result[response.request.url]['res-headers'] = response_headers
-		self.result[response.request.url]['comments']    = comments
-		self.result[response.request.url]['links']       = links
+		self.result[response.request.url]['status-code']      = response.status_code
+		self.result[response.request.url]['request-headers']  = request_headers
+		self.result[response.request.url]['response-headers'] = response_headers
+		self.result[response.request.url]['comments']         = comments
+		self.result[response.request.url]['links']            = links
 		self.result[response.request.url].update(tags)
 
 
@@ -105,9 +105,20 @@ class Reqer:
 				- Change the value of the Host header
 		"""
 
-		if response.headers.get('location'):
-			self.target = response.headers.get('location')
-			self.host   = response.headers.get('location') if re.match('http(s?):\/\/', response.headers.get('location')) else self.host
+		location = response.headers.get('location')
+
+		if location:
+
+			if re.match('^http(s?):\/\/', location):
+				self.target = location
+				self.host   = location
+
+			else:
+				if location.startswith("/"):
+					self.target = "".join( i for i in self.target.split("/")[0:3] )
+					self.target = self.target.replace(":", "://")
+					self.target += location
+
 
 		self.prepare_addresses()
 		self.request_headers['Host'] = self.host
@@ -116,27 +127,27 @@ class Reqer:
 	def prepare_addresses(self):
 		"""
 			Perform:
-				- Remove last forward slash
-				- Check existence of protocol schema
 				- Delete protocol schema and resource path from self.host
 				- Adding protocol schema to self.target
 		"""
 
-		if self.host[-1] == '/':
-			self.host   = self.host[:-1]
+		schema_pattern = "^http(s?):\/\/"
 
-		pattern = "^http(s?)://"
-		has_schema = re.match(pattern, self.target)
+		if re.match(schema_pattern, self.host):
+			self.host = re.sub(schema_pattern, '', self.host).split('/')[0]
 
-		if has_schema:
-			self.host = re.sub(pattern, '', self.host).split('/')[0]
 		else:
+			self.host = self.host.split('/')[0]
+
+
+		if not re.match(schema_pattern, self.target):
 			self.target = f"http://{self.target}"
 
 
 	def get_result(self):
-		self.print_json( self.result )
-		# return self.RESULT
+		# Return crawling result and hostname
+		# self.print_json( self.result )
+		return self.result, self.host
 
 	# TEST FUNCTION: prettify temporary output
 	def print_json(self, data):
