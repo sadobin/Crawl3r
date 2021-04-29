@@ -1,12 +1,13 @@
 #! /usr/bin/python3
 
 import requests as req
-import re
-import sys
 import json
+import re
+import sys, os
+sys.path.append( os.path.dirname( os.path.realpath(__file__) ) )
 
-from .HeadersParser import RequestHeadersParser, ResponseHeadersParser
 from PageScraper    import PageScraper
+from HeadersParser import RequestHeadersParser, ResponseHeadersParser
 
 
 
