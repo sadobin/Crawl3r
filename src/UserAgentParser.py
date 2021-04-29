@@ -1,9 +1,11 @@
 #! /usr/bin/python3 
 
-from user_agents import USER_AGENTS
+import os, sys
+sys.path.append( os.path.dirname( os.path.realpath(__file__) ) )
+
+from lib.user_agents import USER_AGENTS
 import sys
 
-available_ua = "Available: fu, fd, ff, fc, f7, f10, fan, fm, fi, cu, cf, ca, can, cm, ci, e7, e10, ean, em, ei"
 
 
 class UserAgentParser :

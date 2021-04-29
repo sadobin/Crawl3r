@@ -1,9 +1,13 @@
 #! /usr/bin/python3
 
-from UserAgentParser import UserAgentParser
-from PageScraper import PageScraper
-from config import REQUEST_HEADERS, RESPONSE_HEADERS
 import json
+import os, sys
+sys.path.append( os.path.dirname( os.path.dirname( os.path.realpath(__file__) ) ) )
+
+from src.UserAgentParser import UserAgentParser
+from src.PageScraper import PageScraper
+from config import REQUEST_HEADERS, RESPONSE_HEADERS
+
 
 
 class RequestHeadersParser:

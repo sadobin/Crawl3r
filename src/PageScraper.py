@@ -1,5 +1,8 @@
 #! /usr/bin/python3 
 
+import os, sys
+sys.path.append( os.path.dirname( os.path.dirname( os.path.realpath(__file__) ) ) )
+
 from bs4 import BeautifulSoup, Comment
 from config import HTML_ATTRIBUTES, HTML_TAGS
 import re
@@ -31,7 +34,8 @@ class PageScraper:
         
         links = []
 
-        page_content = str(page_content).split(' ')
+        page_content = str(page_content).replace('>', '> ')
+        page_content = page_content.split(' ')
         match_ptrn   = f"^{HTML_ATTRIBUTES}=(\"|').+(\"|')"
         remove_ptrn  = f"^{HTML_ATTRIBUTES}="
 
@@ -53,13 +57,14 @@ class PageScraper:
         tags[tagname] = []
 
         for t in self.bs.find_all(tagname):
-            # tags += dict(t.extract())
             tags[tagname].append(str(t))
 
         return tags
 
 
-    # Getter methods
+    """
+        Getter methods
+    """
     def get_comments(self):
         return self.comments
 

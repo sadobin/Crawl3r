@@ -3,6 +3,8 @@
 import redis
 import sys
 
+
+
 class RedisConnection:
 
     def __init__(self, host='localhost', port=6379, instances=1):
@@ -14,7 +16,8 @@ class RedisConnection:
         self.dbs  = list( range(1, instances+1) )
 
         self.connection()
-        print(f"[*] {instances} of redis has created.")
+        info = '\33[33m[.]\33[0m'
+        print(f"{info} Initialize {instances} redis client(s).")
 
 
     def connection(self):
@@ -31,7 +34,8 @@ class RedisConnection:
                 self.redis_pool.append( redis_client )
             
             except Exception as e:
-                print(f"[!] RedisConnection: {e}")
+                alert = "\33[31m[!]\33[0m"
+                print(f"{alert} RedisConnection: {e}")
                 sys.exit(1)
 
 

@@ -1,17 +1,13 @@
 #! /usr/bin/python3
 
-from multiprocessing import Pool, Process, Manager
+from collections import Counter
 import re
 import sys
-import json
-from collections import Counter
 
 
 class LinkParser:
 
     def __init__(self, reqer_result):
-
-        sys.setrecursionlimit(50000)
 
         try:
             self.links        = []
@@ -27,6 +23,7 @@ class LinkParser:
 
         except Exception as e:
             print(f"[!] LinkParser: {e}")
+            sys.exit(1)
     
 
     def prepare_links(self):
@@ -117,6 +114,3 @@ class LinkParser:
     
     def get_static_files(self):
         return self.static_files
-
-    def print_json(self, data):
-        print( json.dumps( data, indent=4 ) )

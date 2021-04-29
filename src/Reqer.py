@@ -1,27 +1,13 @@
 #! /usr/bin/python3
 
-"""
-    Capabilities: 
-        - Accept target range ***
-        - Port range***
-        - Thread number (depends on list of URIs)***
-        + File that contain http headers and parse it
-        - Tamper http methods (bash version exist)
-        + Tamper uesr agent header
-        - Tamper http protocol version ???
-        + Follow redirection
-
-    Class Threads:
-    	- Instantiate an object of 'Reqer' class
-    	- Define number of threads
-"""
-
-from HeadersParser import RequestHeadersParser, ResponseHeadersParser
-from PageScraper   import PageScraper
 import requests as req
 import re
 import sys
 import json
+
+from HeadersParser import RequestHeadersParser, ResponseHeadersParser
+from PageScraper   import PageScraper
+
 
 
 class Reqer:
@@ -59,7 +45,13 @@ class Reqer:
 
 			while got_redirect:
 
-				response = req.get(self.target, headers=self.request_headers, allow_redirects=False)
+				response = req.get(
+					self.target, 
+					headers=self.request_headers, 
+					allow_redirects=False, 
+					timeout=5
+					)
+
 				got_redirect = response.is_redirect
 
 				self.response_processor(response)
@@ -68,7 +60,8 @@ class Reqer:
 					self.redirection_handler(response)
 
 		except Exception as e:
-			print(e)
+			alert = "\33[31m[!]\33[0m"
+			print(f"{alert} Reqer: {e}")
 
 
 	def response_processor(self, response):
@@ -146,8 +139,10 @@ class Reqer:
 
 	def get_result(self):
 		# Return crawling result and hostname
-		# self.print_json( self.result )
-		return self.result, self.host
+		if __name__ == "__main__":
+			self.print_json( self.result )
+		else:
+			return self.result
 
 	# TEST FUNCTION: prettify temporary output
 	def print_json(self, data):
