@@ -5,8 +5,8 @@ import re
 import sys
 import json
 
-from HeadersParser import RequestHeadersParser, ResponseHeadersParser
-from PageScraper   import PageScraper
+from .HeadersParser import RequestHeadersParser, ResponseHeadersParser
+from PageScraper    import PageScraper
 
 
 
@@ -61,7 +61,7 @@ class Reqer:
 
 		except Exception as e:
 			alert = "\33[31m[!]\33[0m"
-			print(f"{alert} Reqer: {e}")
+			print(f"{alert} Reqer: {e} ({self.target})")
 
 
 	def response_processor(self, response):
@@ -140,13 +140,9 @@ class Reqer:
 	def get_result(self):
 		# Return crawling result and hostname
 		if __name__ == "__main__":
-			self.print_json( self.result )
+			print( json.dumps(self.result, indent=4) )
 		else:
 			return self.result
-
-	# TEST FUNCTION: prettify temporary output
-	def print_json(self, data):
-		print(json.dumps(data, indent=4))
 
 
 

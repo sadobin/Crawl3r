@@ -1,4 +1,5 @@
 #! /usr/bin/python3 
+import subprocess, os, sys
 
 """
     Depth of crawling
@@ -9,16 +10,17 @@ DEPTH = 2
 
 
 """
-    Number of processes parallelism
+    Number of processes
 """
-PROCESSES = 15
+PROCESSES = 10
 
 
 """
     Path to save the resutl
 """
-home_dir = subprocess.check_output( 'echo $HOME', stderr=subprocess.STDOUT, shell=True ).decode().strip()
-os.system(f"mkdir {home_dir}/crawl3r")
+home_dir = subprocess.check_output( 'echo $HOME', shell=True ).decode().strip()
+if not os.path.exists(f"{home_dir}/crawl3r"):
+    os.system(f"mkdir {home_dir}/crawl3r")
 RESULT_PATH = f"{home_dir}/crawl3r"
 
 
