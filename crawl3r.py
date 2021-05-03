@@ -22,7 +22,8 @@ class Crawl3r:
         sys.setrecursionlimit(100000)
         os.system("ulimit -n 8192")     # Increase user limitation
 
-        self.hostname = re.search( '[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+(?!.)(\/)?', target ).group()
+        self.hostname = re.search( '([0-9a-zA-Z-]+\.)?[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+', target ).group()
+        self.hostname = re.search( '[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+$', self.hostname ).group()
         self.reqer_result = {}
         self.links = []
         self.static_files = []
