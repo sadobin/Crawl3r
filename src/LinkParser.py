@@ -40,6 +40,8 @@ class LinkParser:
                 host: hostname
             """
 
+            self.links.append(url)
+
             target = re.search(f'{schema_ptrn}([0-9a-zA-Z-]+\.)?[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+', url).group()
 
             host = re.sub(f"{schema_ptrn}", '', target)
@@ -48,6 +50,7 @@ class LinkParser:
 
             for link in self.reqer_result[url]['links']:
 
+                url  = url.split('?')[0]
                 link = link.split('#')[0]
 
                 # Ignore special protocols
@@ -67,21 +70,19 @@ class LinkParser:
                     self.links.append( temp )
                 
                 # Append link to the current url
-                elif re.search('^(\?|\/\?|\.\.)', link):
+                elif re.search('^(\?|\/\?)', link):
                     temp = url + link
-                    temp = re.sub( '\/(\/)?\?', '/?', temp)
                     self.links.append( temp )
+
+                # Append link to the current url
+                elif re.search('^\.\.', link):
+                    temp  = url + f'/{link}'
 
                 # Append link to the current url
                 elif re.search('^\.\/', link):
                     path = url.split("?")[0]
-                    parent_dir, page = path.rsplit("/", maxsplit=1)
-
-                    if len( page.split(".") ) >= 2:
-                        temp = parent_dir + link[1:]
-                    else:
-                        temp = url + link[1:]
-
+                    parent_dir = path.rsplit("/", maxsplit=1)[0]
+                    temp = parent_dir + link[1:]
                     self.links.append( temp )
 
                 # Append link to the target which contain protocol schema
@@ -96,8 +97,16 @@ class LinkParser:
 
         links = self.links.copy()
 
+        exts  = 'css|js|xml|yml|json|txt|inc|cfg|conf|ini|log|'
+        exts += 'sql|db|mdb|'
+        exts += 'ico|png|jpg|jpeg|svg|gif|'
+        exts += 'pdf|doc|docx|ppt|pptx|xlsx|xls|csv|'
+        exts += 'mp3|mp4|mkv|'
+        exts += 'woff2|woff|'
+        exts += 'zip|tar|gz'
+
         for link in links:
-            if re.findall( '\.(css|js|json|xml|ico|svg|png|jpg|jpeg|gif|pdf|woff2|woff)', link.split('?')[0] ):
+            if re.findall( f'\.({exts})', link ):
                 self.static_files.append(link)
                 self.links.remove(link)
 
