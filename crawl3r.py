@@ -40,61 +40,69 @@ class Crawl3r:
 
 
 
-
     def process_generator(self):
 
         count = 0
 
-        while True:
+        try:
 
-            # Remove links that has been crawled
-            self.links = list( filter(lambda x: x not in self.been_crawled, self.links) )
+            while True:
 
-            if self.links:
+                # Remove links that has been crawled
+                self.links = list( filter(lambda x: x not in self.been_crawled, self.links) )
 
-                """
-                    Split total links to groups of <n> links.
-                    Numerical example: (groups of 5 links)
+                if self.links:
+                    """
+                        Split total links to groups of <n> links.
+                        Numerical example: (groups of 5 links)
 
-                        links: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-                        link_groups: [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12]]
-                """
-                n = config.PROCESSES
-                link_groups = [ self.links[i:i+n] for i in range(0, len(self.links), n) ]
+                            links: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                            link_groups: [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12]]
+                    """
+                    n = config.PROCESSES
+                    link_groups = [ self.links[i:i+n] for i in range(0, len(self.links), n) ]
 
-                for links in link_groups:
+                    for links in link_groups:
 
-                    procs = []
+                        procs = []
 
-                    for link, manager_dict, redis_client in zip(links, self.manager_pool, self.redis_pool):
-                        p = Process( 
-                            target=self.reqer_process, 
-                            args=(link, manager_dict, redis_client) 
-                            )
-                        procs.append(p)
+                        for link, manager_dict, redis_client in zip(links, self.manager_pool, self.redis_pool):
+                            p = Process( 
+                                target=self.reqer_process, 
+                                args=(link, manager_dict, redis_client) 
+                                )
+                            procs.append(p)
 
-                        self.output_handler.logger( f"CRAWLING {link}" )
-                        p.start()
+                            self.output_handler.logger( f"CRAWLING {link}" )
+                            p.start()
 
-                    for proc in procs:
-                        proc.join()
+                        for proc in procs:
+                            proc.join()
 
-                count += 1
+                    count += 1
 
-            else:
-                green = "\33[32m[*]\33[0m"
-                print(f"{green} CRAWLING FINISHED")
-                break
+                else:
+                    green = "\33[32m[*]\33[0m"
+                    print(f"{green} CRAWLING FINISHED")
+                    break
 
 
-            # Update self.been_crawled and get new links from redis_clients
-            self.links_handler()
+                # Update self.been_crawled and get new links from redis_clients
+                self.links_handler()
 
-            if count == config.DEPTH:
-                break
+                if count == config.DEPTH:
+                    break
 
-        # Write final results
+        except KeyboardInterrupt:
+            print(f"\33[31m[!]\33[0m Keyboard Interrupt")
+            # Write final results
+            self.output_handler.final_result(self.redis_pool, self.been_crawled)
+            sys.exit(1)
+
+        # Write current result to the file
         self.output_handler.final_result(self.redis_pool, self.been_crawled)
+        print(self.been_crawled)
+
 
 
     def init_manager_pool(self):
@@ -108,7 +116,6 @@ class Crawl3r:
     def reqer_process(self, target, manager_dict, redis_client):
 
         reqer = Reqer(target)
-        # It return crawling result and hostname
         reqer_result = reqer.get_result()
 
 
