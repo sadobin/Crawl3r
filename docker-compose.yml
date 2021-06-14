@@ -1,0 +1,34 @@
+version: '3'
+
+networks:
+    net:
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.21.10.0/24
+
+services:
+    crawl3r:
+        container_name: "crawl3r"
+        build:
+            context: ./
+            dockerfile: Dockerfile.crawl3r
+        volumes:
+            - "$HOME/crawl3r:/root/crawl3r"
+        depends_on:
+            - redis
+        environment:
+            - REDIS_HOST=${REDIS_HOST}
+        networks:
+            net:
+                ipv4_address: 172.21.10.9
+    
+    redis:
+        build:
+            context: ./
+            dockerfile: Dockerfile.redis
+        ports:
+            - "6379:6379"
+        networks:
+            net:
+                ipv4_address: ${REDIS_HOST}
