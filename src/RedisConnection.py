@@ -28,6 +28,7 @@ class RedisConnection:
                     host=self.host, 
                     port=self.port, 
                     db=db, 
+                    socket_connect_timeout=5, 
                     decode_responses=True)
 
                 redis_client.flushall()
