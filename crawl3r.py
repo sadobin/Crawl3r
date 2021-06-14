@@ -32,8 +32,14 @@ class Crawl3r:
 
         self.links.append(target)
 
+        if os.environ.get("REDIS_HOST"):
+            self.redis_pool = RedisConnection(
+                host=os.environ.get("REDIS_HOST"), 
+                instances=config.PROCESSES).get_redis_pool()
+        else:
+            self.redis_pool = RedisConnection(instances=config.PROCESSES).get_redis_pool()
+
         self.output_handler = OutputHandler(self.hostname)
-        self.redis_pool = RedisConnection(instances=config.PROCESSES).get_redis_pool()
         self.manager_pool = self.init_manager_pool()
 
         self.process_generator()
@@ -101,7 +107,6 @@ class Crawl3r:
 
         # Write current result to the file
         self.output_handler.final_result(self.redis_pool, self.been_crawled)
-        print(self.been_crawled)
 
 
 
@@ -154,7 +159,8 @@ class Crawl3r:
 
 
 try:
-    target = sys.argv[1]
-    crawpy = Crawl3r(target)
+    if len(sys.argv) == 2:
+        target = sys.argv[1]
+        crawpy = Crawl3r(target)
 except Exception as e:
     print(f"\33[31m[!]\33[0m Crawl3r: {e}")
