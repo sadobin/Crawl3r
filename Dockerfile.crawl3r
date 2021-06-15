@@ -1,4 +1,4 @@
-FROM py-ubuntu
+FROM ubuntu:latest
 
 RUN mkdir -p /opt/crawl3r
 
