@@ -1,9 +1,9 @@
 #! /usr/bin/python3 
 
-from multiprocessing import Process, Manager
+from multiprocessing import Process
+from urllib.parse import urlparse
 from collections import Counter
 import sys, os
-import re
 import json
 
 
@@ -22,8 +22,11 @@ class Crawl3r:
         sys.setrecursionlimit(100000)
         os.system("ulimit -n 8192")     # Increase user limitation
 
-        self.hostname = re.search( '([0-9a-zA-Z-]+\.)?[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+', target ).group()
-        self.hostname = re.search( '[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+$', self.hostname ).group()
+        if target.startswith("http"):
+            self.hostname = urlparse(target).hostname
+        else:
+            self.hostname = target.split('/')[0]
+
         self.reqer_result = {}
         self.links = []
         self.static_files = []
@@ -40,7 +43,6 @@ class Crawl3r:
             self.redis_pool = RedisConnection(instances=config.PROCESSES).get_redis_pool()
 
         self.output_handler = OutputHandler(self.hostname)
-        self.manager_pool = self.init_manager_pool()
 
         self.process_generator()
 
@@ -55,9 +57,10 @@ class Crawl3r:
             while True:
 
                 # Remove links that has been crawled
+                self.links = list( Counter(self.links).keys() )
                 self.links = list( filter(lambda x: x not in self.been_crawled, self.links) )
 
-                if self.links:
+                if len(self.links):
                     """
                         Split total links to groups of <n> links.
                         Numerical example: (groups of 5 links)
@@ -72,10 +75,10 @@ class Crawl3r:
 
                         procs = []
 
-                        for link, manager_dict, redis_client in zip(links, self.manager_pool, self.redis_pool):
+                        for link, redis_client in zip(links, self.redis_pool):
                             p = Process( 
                                 target=self.reqer_process, 
-                                args=(link, manager_dict, redis_client) 
+                                args=(link, redis_client) 
                                 )
                             procs.append(p)
 
@@ -109,44 +112,24 @@ class Crawl3r:
         self.output_handler.final_result(self.redis_pool, self.been_crawled)
 
 
-
-    def init_manager_pool(self):
-        pool = []
-        for i in range(config.PROCESSES):
-            pool.append( Manager().dict() )
-
-        return pool
-
-
-    def reqer_process(self, target, manager_dict, redis_client):
+    def reqer_process(self, target, redis_client):
 
         reqer = Reqer(target)
         reqer_result = reqer.get_result()
 
-
         link_parser = LinkParser(reqer_result)
-
-        manager_dict['reqer_result'] = reqer_result
-        manager_dict['links'] = link_parser.get_links()
-        manager_dict['static_files'] = link_parser.get_static_files()
-        manager_dict['all_paths'] = link_parser.get_all_paths()
-
 
         je = json.JSONEncoder()
 
-        reqer_result = je.encode( manager_dict['reqer_result'] )
-        links =  manager_dict['links']
-        static_files =  manager_dict['static_files']
-        all_paths =  manager_dict['all_paths']
+        reqer_result = je.encode(reqer_result)
+        links = list( filter(lambda x: x not in self.been_crawled, link_parser.get_links()) )
+        static_files = link_parser.get_static_files()
+        all_paths = link_parser.get_all_paths()
 
-
-        redis_client.rpush('reqer_result', reqer_result) if reqer_result else None
-        redis_client.rpush('links', *links) if links else None
-        redis_client.rpush('static_files', *static_files) if static_files else None
-        redis_client.rpush('all_paths', *all_paths) if all_paths else None
-
-
-        manager_dict.clear()
+        redis_client.rpush('reqer_result', reqer_result) if len(reqer_result) else None
+        redis_client.rpush('links', *links) if len(links) else None
+        redis_client.rpush('static_files', *static_files) if len(static_files) else None
+        redis_client.rpush('all_paths', *all_paths) if len(all_paths) else None
 
 
     def links_handler(self):
