@@ -6,17 +6,17 @@ import subprocess, os, sys
     E.g: If it was set to 2, passed URL and all found links in it will be crawled.
     Assigning 0 to it, causing crawling the entire domain.
 """
-DEPTH = 2
+DEPTH = 0
 
 
 """
     Number of processes
 """
-PROCESSES = 10
+PROCESSES = 12
 
 
 """
-    Path to save the resutl
+    Path to save the result
 """
 home_dir = subprocess.check_output( 'echo $HOME', shell=True ).decode().strip()
 if not os.path.exists(f"{home_dir}/crawl3r"):
@@ -32,7 +32,7 @@ RESULT_PATH = f"{home_dir}/crawl3r"
 REQUEST_HEADERS = {
 
     'Host': 'TARGET',
-    'User-Agent': 'cu',
+    'User-Agent': 'w7',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate',
     'Accept-Language': 'en-US,en;q=0.5',
@@ -65,5 +65,5 @@ HTML_ATTRIBUTES = '(href|src|action)'
     Specify desired tag to be indexed.
 """
 HTML_TAGS = [
-    '',
+    'form',
     ]

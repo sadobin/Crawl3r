@@ -123,7 +123,3 @@ E.g: If it was set to 2, passed URL and all found links in it will be crawled. A
 
 **HTML_TAGS**: Desired tags for indexing.  
 E.g: form, input, meta, etc.
-
-## ToDo
-  - [ ] Create crawpy API
-  - [ ] Containerize Project
