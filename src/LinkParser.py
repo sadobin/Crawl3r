@@ -1,8 +1,10 @@
 #! /usr/bin/python3
 
 from collections import Counter
+from urllib.parse import urlparse
 import re
 import sys
+import json
 
 
 class LinkParser:
@@ -32,65 +34,66 @@ class LinkParser:
             Prepare links for next crawl
         """
 
-        schema_ptrn = '^http(s?):\/\/'
-
         for url in self.reqer_result:
             """
-                target: protocol schema + hostname
-                host: hostname
+                host: hostname with subdomains (e.g: sub1.sub2.example.com)
+                target: orginal hostname which does not contain subdomains (e.g: example.com)
             """
 
-            self.links.append(url)
+            parsed_url = urlparse(url)
+            host = parsed_url.hostname
 
-            target = re.search(f'{schema_ptrn}([0-9a-zA-Z-]+\.)?[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+', url).group()
-
-            host = re.sub(f"{schema_ptrn}", '', target)
-            host = re.search('[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+$', host).group()
-
+            ip_regex = "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
+            if re.search(f'{ip_regex}(\/)?$', host):
+                target = re.search(f'{ip_regex}(\/)?$', host).group()
+            else:
+                target = re.search('[0-9a-zA-Z-]+\.[0-9a-zA-Z-]+$', host).group()
 
             for link in self.reqer_result[url]['links']:
 
-                url  = url.split('?')[0]
-                link = link.split('#')[0]
+                parsed_link = urlparse(link)
+
+                link = link.replace(f'#{parsed_link.fragment}', '')
 
                 # Ignore special protocols
                 if re.search( '^(mailto:|tel:|javascript:|data:|android-app:|ios-app:|\{)', link ):
                     pass
 
-                # Ignore domains which has different hostname (third-party domains)
-                elif re.search( schema_ptrn, link ):
-                    if re.search(f'{schema_ptrn}([0-9a-zA-Z-]+\.)?{host}(\/)?', link):
-                        self.links.append( link )
-                    else:
-                        pass
+                elif 'http' in parsed_link.scheme:
+                    if target in parsed_link.hostname:
+                        self.links.append(link)
 
-                # if link starts with 'two forward slash' contain hostname, insert http at beginning of it then append.
-                elif re.search( '^\/\/', link ) and re.search( f'^\/\/([0-9a-zA-Z-]+\.)?{host}(\/)?', link ):
-                    temp = f"http:{link}"
-                    self.links.append( temp )
-                
-                # Append link to the current url
-                elif re.search('^(\?|\/\?)', link):
-                    temp = url + link
-                    self.links.append( temp )
+                elif re.search('^\/\/', link):
+                    if target in parsed_link.hostname:
+                        self.links.append(link)
 
                 # Append link to the current url
-                elif re.search('^\.\.', link):
-                    temp  = url + f'/{link}'
+                elif re.search('^(\.\.|\/\.\.)', link):
+                    temp = f'{parsed_url.scheme}://' + \
+                        parsed_url.hostname + \
+                        parsed_url.path + \
+                        '/' + \
+                        link
+                        
+                    self.links.append(temp)
 
                 # Append link to the current url
-                elif re.search('^\.\/', link):
-                    path = url.split("?")[0]
-                    parent_dir = path.rsplit("/", maxsplit=1)[0]
-                    temp = parent_dir + link[1:]
-                    self.links.append( temp )
+                elif re.search('^(\.\/|[0-9a-zA-Z_-]+)', link):
+                    temp = f'{parsed_url.scheme}://' + \
+                        parsed_url.hostname + \
+                        parsed_url.path.rsplit('/', maxsplit=1)[0] + \
+                        '/' + \
+                        link
+                    
+                    self.links.append(temp)
 
                 # Append link to the target which contain protocol schema
-                elif re.search( '^([a-zA-Z0-9_-]|\/[a-zA-Z0-9_-])', link ):
-                    temp  = target
-                    temp += link if link.startswith('/') else f"/{link}"
-                    self.links.append( temp )
-        
+                elif re.search('^\/', link):
+                    temp = f'{parsed_url.scheme}://' + \
+                        parsed_url.hostname + \
+                        link
+
+                    self.links.append(temp)
         
  
     def find_static_files(self):
@@ -102,8 +105,9 @@ class LinkParser:
         exts += 'ico|png|jpg|jpeg|svg|gif|'
         exts += 'pdf|doc|docx|ppt|pptx|xlsx|xls|csv|'
         exts += 'mp3|mp4|mkv|'
-        exts += 'woff2|woff|'
+        exts += 'woff2|woff|ttf|'
         exts += 'zip|tar|gz'
+        exts += '|' + exts.upper()
 
         for link in links:
             if re.findall( f'\.({exts})', link ):
@@ -123,3 +127,15 @@ class LinkParser:
     
     def get_static_files(self):
         return self.static_files
+
+####### DEBUGGING ########
+if __name__ == "__main__":
+    if len(sys.argv) == 2:
+        with open(sys.argv[1], 'r') as f:
+            json_file = json.load(f)
+        LinkParser(json_file)
+    else:
+        print(sys.argv)
+        print(len(sys.argv))
+        print("Usage: LinkParser.py <json-file>")
+####### DEBUGGING ########
