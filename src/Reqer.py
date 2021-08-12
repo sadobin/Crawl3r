@@ -1,9 +1,11 @@
 #! /usr/bin/python3
 
+from urllib.parse import urlparse
 import requests as req
 import json
 import re
 import sys, os
+
 sys.path.append( os.path.dirname( os.path.realpath(__file__) ) )
 
 from PageScraper    import PageScraper
@@ -58,7 +60,7 @@ class Reqer:
 				self.response_processor(response)
 
 				if got_redirect:
-					self.redirection_handler(response)
+					got_redirect = self.redirection_handler(response)
 
 		except Exception as e:
 			alert = "\33[31m[!]\33[0m"
@@ -103,19 +105,23 @@ class Reqer:
 
 		if location:
 
-			if re.match('^http(s?):\/\/', location):
+			if re.match('^http(s?):\/\/', location) and self.host in urlparse(location).hostname:
 				self.target = location
 				self.host   = location
+				self.prepare_addresses()
+				self.request_headers['Host'] = self.host
+				return True
+
+			elif location.startswith("/"):
+				self.target = "".join( i for i in self.target.split("/")[0:3] )
+				self.target = self.target.replace(":", "://")
+				self.target += location
+				self.prepare_addresses()
+				self.request_headers['Host'] = self.host
+				return True
 
 			else:
-				if location.startswith("/"):
-					self.target = "".join( i for i in self.target.split("/")[0:3] )
-					self.target = self.target.replace(":", "://")
-					self.target += location
-
-
-		self.prepare_addresses()
-		self.request_headers['Host'] = self.host
+				return False
 
 
 	def prepare_addresses(self):
@@ -129,7 +135,6 @@ class Reqer:
 
 		if re.match(schema_pattern, self.host):
 			self.host = re.sub(schema_pattern, '', self.host).split('/')[0]
-
 		else:
 			self.host = self.host.split('/')[0]
 
