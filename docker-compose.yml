@@ -5,11 +5,11 @@ networks:
         ipam:
             driver: default
             config:
-                - subnet: 172.21.10.0/24
+                - subnet: 172.30.10.0/24
 
 services:
     crawl3r:
-        container_name: "crawl3r"
+        #container_name: "crawl3r"
         build:
             context: ./
             dockerfile: Dockerfile.crawl3r
@@ -21,7 +21,7 @@ services:
             - REDIS_HOST=${REDIS_HOST}
         networks:
             net:
-                ipv4_address: 172.21.10.9
+                ipv4_address: 172.30.10.9
     
     redis:
         build:

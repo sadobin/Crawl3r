@@ -2,6 +2,7 @@
 
 from collections import Counter
 from urllib.parse import urlparse
+import html
 import re
 import sys
 import json
@@ -54,6 +55,7 @@ class LinkParser:
                 parsed_link = urlparse(link)
 
                 link = link.replace(f'#{parsed_link.fragment}', '')
+                link = html.unescape(link)
 
                 # Ignore special protocols
                 if re.search( '^(mailto:|tel:|javascript:|data:|android-app:|ios-app:|\{)', link ):
@@ -104,9 +106,10 @@ class LinkParser:
         exts += 'sql|db|mdb|'
         exts += 'ico|png|jpg|jpeg|svg|gif|'
         exts += 'pdf|doc|docx|ppt|pptx|xlsx|xls|csv|'
-        exts += 'mp3|mp4|mkv|'
+        exts += 'mp3|mp4|mkv|m4v|'
         exts += 'woff2|woff|ttf|'
-        exts += 'zip|tar|gz'
+        exts += 'zip|tar|gz|'
+        exts += 'apk|exe'
         exts += '|' + exts.upper()
 
         for link in links:
