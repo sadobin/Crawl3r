@@ -1,5 +1,4 @@
 #! /usr/bin/python3 
-import subprocess, os, sys
 
 """
     Depth of crawling
@@ -8,20 +7,12 @@ import subprocess, os, sys
 """
 DEPTH = 0
 
-
-"""
-    Number of processes
-"""
-PROCESSES = 12
+# Crawl3r directory
+CRAWLER_DIR = ""
 
 
-"""
-    Path to save the result
-"""
-home_dir = subprocess.check_output( 'echo $HOME', shell=True ).decode().strip()
-if not os.path.exists(f"{home_dir}/crawl3r"):
-    os.system(f"mkdir {home_dir}/crawl3r")
-RESULT_PATH = f"{home_dir}/crawl3r"
+# Number of processes
+PROCESSES = 8
 
 
 """
@@ -32,13 +23,14 @@ RESULT_PATH = f"{home_dir}/crawl3r"
 REQUEST_HEADERS = {
 
     'Host': 'TARGET',
-    'User-Agent': 'w7',
+    'User-Agent': 'w10',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate',
     'Accept-Language': 'en-US,en;q=0.5',
-    'Connection': 'keep-alive',
-    # 'DNT': '1',
-    #'Cache-Control': 'max-age=0',
+    #'Cookie': '',
+    #'X-Trace-Id': '',
+    'DNT': '1',
+    'Cache-Control': 'max-age=0',
     #'Upgrade-Insecure-Requests': '1',
 
 }
@@ -66,4 +58,5 @@ HTML_ATTRIBUTES = '(href|src|action)'
 """
 HTML_TAGS = [
     'form',
+    'meta',
     ]
