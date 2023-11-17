@@ -85,12 +85,13 @@ class Reqer:
 		tags     = ps.get_tags()
 
 		self.result[response.request.url] = {}
-		self.result[response.request.url]['status-code']      = response.status_code
-		self.result[response.request.url]['request-headers']  = request_headers
-		self.result[response.request.url]['response-headers'] = response_headers
-		self.result[response.request.url]['comments']         = comments
-		self.result[response.request.url]['links']            = links
-		self.result[response.request.url].update(tags)
+		self.result[response.request.url]['status-code']       = response.status_code
+		self.result[response.request.url]['request-headers']   = request_headers
+		self.result[response.request.url]['response-headers']  = response_headers
+		self.result[response.request.url]['response']          = response.text
+		self.result[response.request.url]['comments']          = comments
+		self.result[response.request.url]['links']             = links
+		self.result[response.request.url]['tags']              = tags
 
 
 	def redirection_handler(self, response):
