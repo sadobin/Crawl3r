@@ -123,6 +123,7 @@ class Crawl3r:
             sys.exit(1)
 
         # Write current result to the file
+        self.output_handler.logger('Saving result')
         self.output_handler.final_result(self.pg_global_pool, self.been_crawled)
 
 

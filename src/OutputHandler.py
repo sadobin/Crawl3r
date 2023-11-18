@@ -20,14 +20,14 @@ class OutputHandler:
         self.hostname = hostname
         self.dir = self.create_target_dir(hostname)
         # date = datetime.datetime.fromtimestamp(time.time()).strftime("%y-%m-%d")
-        date = datetime.now().strftime("%y-%m-%d")
+        date = datetime.now().strftime("%y.%m.%d")
         
         log_file = f'{self.dir}/logger.{self.hostname}.{date}.log'
         self.log_file = open(log_file, 'w+')
 
     def logger(self, log):
         # time_ = datetime.datetime.fromtimestamp(time.time()).strftime("%H-%M-%S")  # Return current time
-        time_ = datetime.now().strftime("%H-%M-%S")  # Return current time
+        time_ = datetime.now().strftime("%H.%M.%S")  # Return current time
         self.log_file.writelines(f"[ {time_} ] {log}\n")
         print(f"\33[36m[ {time_} ]\33[0m {log}")
 
@@ -42,9 +42,9 @@ class OutputHandler:
         # static_files = list(Counter(static_files).keys())  # Make it unique
 
         conn = pg_global_pool.create_connection()
-        reqer_result = ''
-        all_paths = ''
-        static_files = ''
+        reqer_result = pg_global_pool.fetch_data(conn, 'reqer_result')
+        all_paths = pg_global_pool.fetch_data(conn, 'all_paths')
+        static_files = pg_global_pool.fetch_data(conn, 'static_files')
 
         self.file_writer('reqer-result', reqer_result)
         self.file_writer('all-paths', all_paths)
@@ -56,7 +56,7 @@ class OutputHandler:
         """
             Path to save the result
         """
-        now_time = datetime.now().strftime('%Y-%m-%d.%H-%M')
+        now_time = datetime.now().strftime('%Y.%m.%d-%H.%M')
         home_dir = subprocess.check_output('echo $HOME', shell=True).decode().strip()
         if not config.CRAWLER_DIR:
             print('[!] Set the CRAWLER_DIR in config.py')
@@ -69,7 +69,7 @@ class OutputHandler:
 
 
     def file_writer(self, name, data):
-        time_ = datetime.now().strftime("%H-%M-%S")  # Return current time
+        time_ = datetime.now().strftime("%H.%M.%S")  # Return current time
         filename = f'{self.dir}/{name}.{self.hostname}.{time_}.json'
         with open(filename, 'w') as f:
             data = json.JSONEncoder().encode(data)

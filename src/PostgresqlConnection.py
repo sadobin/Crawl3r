@@ -4,6 +4,8 @@ import os
 import sys
 from datetime import datetime
 import copy
+from collections import Counter
+
 
 import psycopg2
 from psycopg2 import pool
@@ -22,7 +24,7 @@ class PostgresqlConnection:
     def __init__(self, pg_user, pg_pass, target, host='localhost', port=5432):
         self.output_handler = OutputHandler(target)
 
-        now_time = datetime.now().strftime('%Y-%m-%d.%H-%M')
+        now_time = datetime.now().strftime('%Y.%m.%d-%H.%M')
         self.db_name = f'crawler_{target}_{now_time}'
         self.pg_dsn = {
             'database': self.db_name,
@@ -138,13 +140,28 @@ class PostgresqlConnection:
     def fetch_data(self, conn, table):
         fetch_query = {
             # "reqer_result": f"INSERT INTO reqer_result (status, req_headers, res_headers, res, extras) VALUES (%d,%s,%s,%s,%s);",
-            "reqer_result": "INSERT INTO reqer_result (result) VALUES (%s);",
-            "static_files": "INSERT INTO static_files (links) VALUES (%s);",
-            "all_paths": "INSERT INTO all_paths (links) VALUES (%s);",
-            "been_crawled": "INSERT INTO been_crawled (links) VALUES (%s);",
+            "reqer_result": "SELECT * FROM reqer_result;",
+            "static_files": "SELECT * FROM static_files;",
+            "all_paths": "SELECT * FROM all_paths;",
+            "been_crawled": "SELECT * FROM been_crawled;",
         }
 
         query = fetch_query.get(table)
+        cursor = conn.cursor()
+        cursor.execute(query)
+        res = cursor.fetchall()
+
+        if table == 'reqer_result':
+            r = {}
+            for l in res:   r.update(dict(l[0]))
+            return r
+        else:
+            r = []
+            for l in res:   r += list(l)[0]
+            r = list(Counter(r).keys())
+            return r
+            
+
 
 
 
