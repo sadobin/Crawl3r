@@ -101,12 +101,12 @@ class LinkParser:
 
         exts  = 'css|js|xml|yml|json|txt|inc|cfg|conf|ini|log|'
         exts += 'sql|db|mdb|'
-        exts += 'ico|png|jpg|jpeg|svg|gif|'
+        exts += 'ico|png|jpg|jpeg|svg|gif|webp|'
         exts += 'pdf|doc|docx|ppt|pptx|xlsx|xls|csv|'
         exts += 'mp3|mp4|mkv|m4v|'
         exts += 'woff2|woff|ttf|'
         exts += 'zip|tar|gz|'
-        exts += 'apk|exe|dmg'
+        exts += 'apk|exe|dmg|img|bin'
         exts += '|' + exts.upper()
 
         for link in links:

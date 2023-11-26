@@ -1,11 +1,11 @@
 #! /usr/bin/python3 
 
-from multiprocessing import Process
+from multiprocessing import Process, Manager
 from urllib.parse import urlparse
 from collections import Counter
 import sys, os
 import json
-
+import numpy as np
 
 from src.Reqer import Reqer
 from src.LinkParser import LinkParser
@@ -15,13 +15,12 @@ from src.OutputHandler import OutputHandler
 import config
 
 
-
 class Crawl3r:
 
     def __init__(self, target):
 
         sys.setrecursionlimit(100000)
-        os.system("ulimit -n 8192")     # Increase user limitation
+        os.system("ulimit -n 8192")  # Increase user limitation
 
         if target.startswith("http"):
             self.hostname = urlparse(target).hostname
@@ -29,20 +28,22 @@ class Crawl3r:
             self.hostname = target.split('/')[0]
         self.reqer_result = {}
         # Links to crawl
-        self.links = []
+        self.links = np.array([])
+        # New links to crawl
+        self.new_links = []
         # Founded static files
         self.static_files = []
         # Crawled paths
-        self.been_crawled = []
+        self.been_crawled = np.array([])
 
-        self.links.append(target)
+        self.links = np.append(self.links, target)
 
-        if os.environ.get("REDIS_HOST"):
-            self.redis_pool = RedisConnection(
-                host=os.environ.get("REDIS_HOST"),
-                instances=1).get_redis_pool()
-        else:
-            self.redis_pool = RedisConnection(instances=config.PROCESSES).get_redis_pool()
+        # if os.environ.get("REDIS_HOST"):
+        #     self.redis_pool = RedisConnection(
+        #         host=os.environ.get("REDIS_HOST"),
+        #         instances=1).get_redis_pool()
+        # else:
+        #     self.redis_pool = RedisConnection(instances=config.PROCESSES).get_redis_pool()
 
         if os.environ['PG_USER'] and os.environ['PG_PASS']:
             self.pg_global_pool = PostgresqlConnection(
@@ -54,20 +55,16 @@ class Crawl3r:
         self.output_handler = OutputHandler(self.hostname)
         self.process_generator()
 
-
     def process_generator(self):
 
         count = 0
-
         try:
 
             while True:
 
                 # Remove links that has been crawled
-                self.links = list(Counter(self.links).keys())
-                self.links = list( filter(lambda x: x not in self.been_crawled, self.links) )
-                ############
-                # pg_pool = self.pg_global_pool.get_pg_pool(config.PROCESSES)
+                self.links = np.unique(self.links).tolist()
+                self.links = list(filter(lambda x: x not in self.been_crawled.tolist(), self.links))
 
                 if len(self.links):
                     """
@@ -78,27 +75,23 @@ class Crawl3r:
                             link_groups: [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12]]
                     """
                     n = config.PROCESSES
-                    link_groups = [ self.links[i:i+n] for i in range(0, len(self.links), n) ]
+                    link_groups = [self.links[i:i + n] for i in range(0, len(self.links), n)]
 
                     for links in link_groups:
-
                         procs = []
-
-                        # for link, redis_client in zip(links, self.redis_pool):
-                        # for link, pg_conn in zip(links, pg_pool):
+                        # handle return values of the reqer_process method
+                        manager = Manager()
+                        return_links = manager.list()
                         for link in links:
                             p = Process(
-                                target=self.reqer_process, 
-                                # args=(link, pg_conn)
-                                args=(link,)
-                                )
+                                target=self.reqer_process,
+                                args=(link, return_links)
+                            )
                             procs.append(p)
-
                             self.output_handler.logger(f"CRAWLING {link}")
                             p.start()
-
-                        for proc in procs:
-                            proc.join()
+                        for proc in procs: proc.join()
+                        self.new_links += return_links
 
                     count += 1
 
@@ -117,16 +110,14 @@ class Crawl3r:
             print(f"\33[31m[!]\33[0m Keyboard Interrupt")
             # Write final results
             self.output_handler.logger('Saving result')
-            self.output_handler.final_result(self.pg_global_pool, self.been_crawled)
+            self.output_handler.final_result(self.pg_global_pool, self.been_crawled.tolist())
             sys.exit(1)
 
         # Write current result to the file
         self.output_handler.logger('Saving result')
-        self.output_handler.final_result(self.pg_global_pool, self.been_crawled)
+        self.output_handler.final_result(self.pg_global_pool, self.been_crawled.tolist())
 
-
-    # def reqer_process(self, target, pg_conn):
-    def reqer_process(self, target):
+    def reqer_process(self, target, return_links):
 
         reqer = Reqer(target)
         reqer_result = reqer.get_result()
@@ -134,26 +125,21 @@ class Crawl3r:
         link_parser = LinkParser(reqer_result)
 
         je = json.JSONEncoder()
-
         reqer_result = je.encode(reqer_result)
-        links = list( filter(lambda x: x not in self.been_crawled, link_parser.get_links()) )
+        links = list(filter(lambda x: x not in self.been_crawled.tolist(), link_parser.get_links()))
         static_files = link_parser.get_static_files()
 
-        
         self.pg_global_pool.insert_data('reqer_result', reqer_result) if len(reqer_result) else None
-        # self.pg_thread_pool.insert_data(pg_conn, 'links', links) if len(links) else None
         self.pg_global_pool.insert_data('static_files', static_files) if len(static_files) else None
 
-        ################################
-        # self.pg_thread_pool.putaway_pg_conn(pg_conn)
-        self.redis_pool[0].rpush('links', *links) if len(links) else None
+        # self.new_links += links if len(links) else None
+        if len(links): return_links += links
 
 
     def links_handler(self):
-        self.been_crawled += self.links
-        self.links = []
-        for redis_client in self.redis_pool:
-            self.links += redis_client.lrange('links', 0, -1)
+        # self.been_crawled += self.links
+        self.been_crawled = np.append(self.been_crawled, self.links)
+        self.links = self.new_links.copy()
 
 
 
