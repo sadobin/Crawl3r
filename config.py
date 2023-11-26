@@ -8,7 +8,7 @@
 DEPTH = 0
 
 # Crawl3r directory
-CRAWLER_DIR = ""
+CRAWLER_DIR = "/mnt/d/crawl3r"
 
 
 # Number of processes

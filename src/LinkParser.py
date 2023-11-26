@@ -14,15 +14,12 @@ class LinkParser:
 
         try:
             self.links        = []
-            self.all_paths    = []
             self.static_files = []
             self.reqer_result = reqer_result
 
             self.prepare_links()
             self.links = list( Counter(self.links).keys() )     # Put away duplicate links
             self.find_static_files()
-
-            self.all_paths += self.links + self.static_files
 
         except Exception as e:
             print(f"[!] LinkParser: {e}")
@@ -96,8 +93,8 @@ class LinkParser:
                         link
 
                     self.links.append(temp)
-        
- 
+
+
     def find_static_files(self):
 
         links = self.links.copy()
@@ -109,7 +106,7 @@ class LinkParser:
         exts += 'mp3|mp4|mkv|m4v|'
         exts += 'woff2|woff|ttf|'
         exts += 'zip|tar|gz|'
-        exts += 'apk|exe'
+        exts += 'apk|exe|dmg'
         exts += '|' + exts.upper()
 
         for link in links:
@@ -121,10 +118,6 @@ class LinkParser:
     """
         Getter methods
     """
-
-    def get_all_paths(self):
-        return self.all_paths
-
     def get_links(self):
         return self.links
     

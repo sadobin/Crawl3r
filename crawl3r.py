@@ -34,8 +34,6 @@ class Crawl3r:
         self.static_files = []
         # Crawled paths
         self.been_crawled = []
-        # All paths founded
-        self.all_paths = []
 
         self.links.append(target)
 
@@ -140,21 +138,15 @@ class Crawl3r:
         reqer_result = je.encode(reqer_result)
         links = list( filter(lambda x: x not in self.been_crawled, link_parser.get_links()) )
         static_files = link_parser.get_static_files()
-        all_paths = link_parser.get_all_paths()
 
         
         self.pg_global_pool.insert_data('reqer_result', reqer_result) if len(reqer_result) else None
         # self.pg_thread_pool.insert_data(pg_conn, 'links', links) if len(links) else None
         self.pg_global_pool.insert_data('static_files', static_files) if len(static_files) else None
-        self.pg_global_pool.insert_data('all_paths', all_paths) if len(all_paths) else None
 
         ################################
         # self.pg_thread_pool.putaway_pg_conn(pg_conn)
-
-        # redis_client.rpush('reqer_result', reqer_result) if len(reqer_result) else None
         self.redis_pool[0].rpush('links', *links) if len(links) else None
-        # redis_client.rpush('static_files', *static_files) if len(static_files) else None
-        # redis_client.rpush('all_paths', *all_paths) if len(all_paths) else None
 
 
     def links_handler(self):

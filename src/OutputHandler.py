@@ -25,8 +25,8 @@ class OutputHandler:
         log_file = f'{self.dir}/logger.{self.hostname}.{date}.log'
         self.log_file = open(log_file, 'w+')
 
+    # TODO: create various log level
     def logger(self, log):
-        # time_ = datetime.datetime.fromtimestamp(time.time()).strftime("%H-%M-%S")  # Return current time
         time_ = datetime.now().strftime("%H.%M.%S")  # Return current time
         self.log_file.writelines(f"[ {time_} ] {log}\n")
         print(f"\33[36m[ {time_} ]\33[0m {log}")
@@ -43,8 +43,8 @@ class OutputHandler:
 
         conn = pg_global_pool.create_connection()
         reqer_result = pg_global_pool.fetch_data(conn, 'reqer_result')
-        all_paths = pg_global_pool.fetch_data(conn, 'all_paths')
         static_files = pg_global_pool.fetch_data(conn, 'static_files')
+        all_paths = list(Counter(been_crawled + static_files).keys())
 
         self.file_writer('reqer-result', reqer_result)
         self.file_writer('all-paths', all_paths)

@@ -115,7 +115,7 @@ class PostgresqlConnection:
             # "reqer_result": "CREATE TABLE reqer (status integer, req_headers json, res_headers json, res text, extras json);",
             "reqer_result": "CREATE TABLE reqer_result (result json);",
             "static_files": "CREATE TABLE static_files (links text[]);",
-            "all_paths": "CREATE TABLE all_paths (links text[]);",
+            # "all_paths": "CREATE TABLE all_paths (links text[]);",
             "been_crawled": "CREATE TABLE been_crawled (links text[]);",
         }
         conn.autocommit = True
@@ -142,7 +142,7 @@ class PostgresqlConnection:
             # "reqer_result": f"INSERT INTO reqer_result (status, req_headers, res_headers, res, extras) VALUES (%d,%s,%s,%s,%s);",
             "reqer_result": "SELECT * FROM reqer_result;",
             "static_files": "SELECT * FROM static_files;",
-            "all_paths": "SELECT * FROM all_paths;",
+            # "all_paths": "SELECT * FROM all_paths;",
             "been_crawled": "SELECT * FROM been_crawled;",
         }
 
@@ -171,7 +171,7 @@ class PostgresqlConnection:
             # "reqer_result": f"INSERT INTO reqer_result (status, req_headers, res_headers, res, extras) VALUES (%d,%s,%s,%s,%s);",
             "reqer_result": "INSERT INTO reqer_result (result) VALUES (%s);",
             "static_files": "INSERT INTO static_files (links) VALUES (%s);",
-            "all_paths": "INSERT INTO all_paths (links) VALUES (%s);",
+            # "all_paths": "INSERT INTO all_paths (links) VALUES (%s);",
             "been_crawled": "INSERT INTO been_crawled (links) VALUES (%s);",
         }
         query = insert_query.get(table)
@@ -188,11 +188,10 @@ class PostgresqlConnection:
             # )
         elif table == "static_files":
             query = insert_query.get(table).format(data)
-        elif table == "all_paths":
-            query = insert_query.get(table).format(data)
         elif table == "been_crawled":
             query = insert_query.get(table).format(data)
         """
+
         conn = self.create_connection(**self.pg_dsn)
         conn.autocommit = True
         cursor = conn.cursor()

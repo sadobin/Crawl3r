@@ -2,11 +2,13 @@
 
 from urllib.parse import urlparse
 import requests as req
+from urllib3.exceptions import InsecureRequestWarning
 import json
 import re
 import sys, os
 
 sys.path.append( os.path.dirname( os.path.realpath(__file__) ) )
+req.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 from PageScraper    import PageScraper
 from HeadersParser import RequestHeadersParser, ResponseHeadersParser
@@ -52,7 +54,8 @@ class Reqer:
 					self.target, 
 					headers=self.request_headers, 
 					allow_redirects=False, 
-					timeout=5
+					timeout=5,
+                                        verify=False
 					)
 
 				got_redirect = response.is_redirect
