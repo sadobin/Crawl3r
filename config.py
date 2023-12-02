@@ -23,14 +23,14 @@ PROCESSES = 8
 REQUEST_HEADERS = {
 
     'Host': 'TARGET',
-    'User-Agent': 'cf',
+    'User-Agent': 'ff',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate',
     'Accept-Language': 'en-US,en;q=0.5',
     #'Cookie': '',
     #'X-Trace-Id': '',
     'DNT': '1',
-    'Cache-Control': 'max-age=0',
+    #'Cache-Control': 'max-age=0',
     'Upgrade-Insecure-Requests': '1',
 
 }

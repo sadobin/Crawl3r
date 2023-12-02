@@ -64,7 +64,8 @@ class LinkParser:
 
                 elif re.search('^\/\/', link):
                     if target in parsed_link.hostname:
-                        self.links.append(link)
+                        temp_link = parsed_url.scheme + "://" + link[2:]
+                        self.links.append(temp_link)
 
                 # Append link to the current url
                 elif re.search('^(\.\.|\/\.\.)', link):
