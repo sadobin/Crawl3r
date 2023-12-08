@@ -1,4 +1,4 @@
 requests
 beautifulsoup4
-#redis
-psycopg2
+psycopg2-binary
+numpy
