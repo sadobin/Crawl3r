@@ -29,13 +29,13 @@ class PostgresqlConnection:
         self.pg_dsn = {
             'database': self.db_name,
             'user': pg_user,
-            'password': pg_user,
+            'password': pg_pass,
             'host': host,
             'port': port,
         }
 
         # Creating crawler database
-        self.create_db(self.db_name)
+        self.create_db(self.db_name, pg_user)
 
         # self.pg_global_conn = psycopg2.connect(
         #     user=pg_user,
@@ -84,7 +84,7 @@ class PostgresqlConnection:
         return psycopg2.connect(**dsn)
 
 
-    def create_db(self, db_name):
+    def create_db(self, db_name, pg_user):
         dsn = copy.deepcopy(self.pg_dsn)
         dsn.update({'database': 'postgres'})
         conn = self.create_connection(**dsn)
@@ -94,7 +94,7 @@ class PostgresqlConnection:
 
         try:
             # Create target database
-            create_db_query = f'CREATE DATABASE "{db_name}" ENCODING "UTF8" OWNER sadobin'
+            create_db_query = f'CREATE DATABASE "{db_name}" ENCODING "UTF8" OWNER {pg_user}'
             cursor.execute(create_db_query)
             conn.commit()
             self.output_handler.logger(f'POSTGRESQL: database {db_name} created')
