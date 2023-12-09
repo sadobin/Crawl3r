@@ -3,7 +3,7 @@
 from multiprocessing import Process, Manager
 from urllib.parse import urlparse
 from collections import Counter
-import sys, os
+import sys, argparse, os
 import json
 import numpy as np
 
@@ -15,9 +15,10 @@ from src.OutputHandler import OutputHandler
 import config
 
 
+
 class Crawl3r:
 
-    def __init__(self, target):
+    def __init__(self, target, CRAWLER_DIR):
 
         sys.setrecursionlimit(100000)
         os.system("ulimit -n 8192")  # Increase user limitation
@@ -49,10 +50,11 @@ class Crawl3r:
             self.pg_global_pool = PostgresqlConnection(
                 pg_user=os.environ['PG_USER'],
                 pg_pass=os.environ['PG_PASS'],
-                target=self.hostname
+                target=self.hostname,
+                CRAWLER_DIR = CRAWLER_DIR
             )
 
-        self.output_handler = OutputHandler(self.hostname)
+        self.output_handler = OutputHandler(self.hostname,CRAWLER_DIR)
         self.process_generator()
 
     def process_generator(self):
@@ -143,9 +145,21 @@ class Crawl3r:
 
 
 
-try:
-    if len(sys.argv) == 2:
-        target = sys.argv[1]
-        crawpy = Crawl3r(target)
-except Exception as e:
-    print(f"\33[31m[!]\33[0m Crawl3r: {e}")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Crawl3r: A tool for web crawling")
+    parser.add_argument('-t', '--target', dest='target', help='Specify the target url', required=True)
+    parser.add_argument('-BD', '--BaseDirectory', dest='base_directory', help='Specify the base directory', required=True)
+    parser.add_argument('-Pu', '--PGuser', dest='pg_user', help='Specify the PostgreSQL username')
+    parser.add_argument('--Pp', '--PGpass', dest='pg_pass', help='Specify the PostgreSQL password')
+    parser.add_argument('-UA', '--useragent', dest='user_agent', help='Specify the User-Agent')
+    parser.add_argument('-H', '--Header', dest='header', help='Specify custom headers')
+    parser.add_argument('-C', '--Cookie', dest='cookie', help='Specify cookies')
+
+    args = parser.parse_args()
+
+    try:
+            TARGET = args.target
+            CRAWLER_DIR = args.base_directory
+            crawpy = Crawl3r(TARGET,CRAWLER_DIR)
+    except Exception as e:
+        print(f"\33[31m[!]\33[0m Crawl3r: {e}")

@@ -8,17 +8,15 @@ import os
 import sys
 import subprocess
 import logging
-import config
 
 logging.basicConfig(level=logging.INFO)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 
 class OutputHandler:
-
-    def __init__(self, hostname):
+    def __init__(self, hostname,CRAWLER_DIR):
         self.hostname = hostname
-        self.dir = self.create_target_dir(hostname)
+        self.dir = self.create_target_dir(hostname,CRAWLER_DIR)
         # date = datetime.datetime.fromtimestamp(time.time()).strftime("%y-%m-%d")
         date = datetime.now().strftime("%y.%m.%d")
         
@@ -52,16 +50,16 @@ class OutputHandler:
         self.file_writer('been-crawled', been_crawled)
 
 
-    def create_target_dir(self, hostname):
+    def create_target_dir(self, hostname,CRAWLER_DIR):
         """
             Path to save the result
         """
         now_time = datetime.now().strftime('%Y.%m.%d-%H.%M')
         home_dir = subprocess.check_output('echo $HOME', shell=True).decode().strip()
-        if not config.CRAWLER_DIR:
-            print('[!] Set the CRAWLER_DIR in config.py')
+        if not CRAWLER_DIR:
+            print('[!] Set the CRAWLER_DIR')
             sys.exit(1)
-        result_dir = f"{config.CRAWLER_DIR}/{hostname}.{now_time}"
+        result_dir = f"{CRAWLER_DIR}/{hostname}.{now_time}"
         if not os.path.exists(result_dir):
             os.mkdir(result_dir)
             logging.info(f'The result directory created ({result_dir})')

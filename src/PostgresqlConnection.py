@@ -14,15 +14,14 @@ from psycopg2 import pool
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from OutputHandler import OutputHandler
-import config
 
 
 
 
 class PostgresqlConnection:
 
-    def __init__(self, pg_user, pg_pass, target, host='localhost', port=5432):
-        self.output_handler = OutputHandler(target)
+    def __init__(self, pg_user, pg_pass, target, CRAWLER_DIR, host='localhost', port=5432):
+        self.output_handler = OutputHandler(target,CRAWLER_DIR)
 
         now_time = datetime.now().strftime('%Y.%m.%d-%H.%M')
         self.db_name = f'crawler_{target}_{now_time}'
@@ -37,41 +36,9 @@ class PostgresqlConnection:
         # Creating crawler database
         self.create_db(self.db_name, pg_user)
 
-        # self.pg_global_conn = psycopg2.connect(
-        #     user=pg_user,
-        #     password=pg_pass,
-        #     host=host,
-        #     port=port,
-        #     database=self.db_name,
-        #     # async_=True
-        # )
-
-        # self.pg_pool = psycopg2.pool.ThreadedConnectionPool(
-        #     minconn=config.PROCESSES,
-        #     maxconn=config.PROCESSES,
-        #     user=pg_user,
-        #     password=pg_pass,
-        #     host=host,
-        #     port=port,
-        #     database=self.db_name,
-        #     # async_=True
-        # )
-
-        # self.pg_pool = asyncpg.create_pool(
-        #     user=pg_user,
-        #     password=pg_pass,
-        #     host=host,
-        #     port=port,
-        #     database=self.db_name,
-        #     min_size=config.PROCESSES,
-        #     max_size=config.PROCESSES
-        # )
-
         conn = self.create_connection(**self.pg_dsn)
         self.create_tables(conn)
         conn.close()
-        # self.pg_global_conn.putconn(conn)
-
 
     def create_connection(self, **kwargs):
         dsn = copy.deepcopy(self.pg_dsn)
