@@ -18,7 +18,7 @@ import config
 
 class Crawl3r:
 
-    def __init__(self, target, CRAWLER_DIR):
+    def __init__(self, target, CRAWLER_DIR, PG_HOST, PG_PORT):
 
         sys.setrecursionlimit(100000)
         os.system("ulimit -n 8192")  # Increase user limitation
@@ -39,15 +39,10 @@ class Crawl3r:
 
         self.links = np.append(self.links, target)
 
-        # if os.environ.get("REDIS_HOST"):
-        #     self.redis_pool = RedisConnection(
-        #         host=os.environ.get("REDIS_HOST"),
-        #         instances=1).get_redis_pool()
-        # else:
-        #     self.redis_pool = RedisConnection(instances=config.PROCESSES).get_redis_pool()
-
         if os.environ['PG_USER'] and os.environ['PG_PASS']:
             self.pg_global_pool = PostgresqlConnection(
+                pg_host=PG_HOST,
+                pg_port=PG_PORT,
                 pg_user=os.environ['PG_USER'],
                 pg_pass=os.environ['PG_PASS'],
                 target=self.hostname,
@@ -147,10 +142,10 @@ class Crawl3r:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Crawl3r: A tool for web crawling")
-    parser.add_argument('-t', '--target', dest='target', help='Specify the target url', required=True)
+    parser.add_argument('-u', '--url', dest='target', help='Specify the target url', required=True)
     parser.add_argument('-BD', '--BaseDirectory', dest='base_directory', help='Specify the base directory', required=True)
-    parser.add_argument('-Pu', '--PGuser', dest='pg_user', help='Specify the PostgreSQL username')
-    parser.add_argument('--Pp', '--PGpass', dest='pg_pass', help='Specify the PostgreSQL password')
+    parser.add_argument('--pghost', dest='p_host', help='Specify the PostgreSQL server (default: localhost)')
+    parser.add_argument('--pgport', dest='p_port', help='Specify the PostgreSQL port (default: 5432)')
     parser.add_argument('-UA', '--useragent', dest='user_agent', help='Specify the User-Agent')
     parser.add_argument('-H', '--Header', dest='header', help='Specify custom headers')
     parser.add_argument('-C', '--Cookie', dest='cookie', help='Specify cookies')
@@ -158,8 +153,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-            TARGET = args.target
-            CRAWLER_DIR = args.base_directory
-            crawpy = Crawl3r(TARGET,CRAWLER_DIR)
+        TARGET = args.target
+        CRAWLER_DIR = args.base_directory
+        PG_HOST = "localhost"
+        PG_PORT = "5432"
+
+        if args.p_host:
+            PG_HOST = args.p_host
+        if args.p_port:
+            PG_HOST = args.p_port
+        crawpy = Crawl3r(TARGET, CRAWLER_DIR, PG_HOST, PG_PORT)
+
     except Exception as e:
         print(f"\33[31m[!]\33[0m Crawl3r: {e}")
