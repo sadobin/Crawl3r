@@ -76,6 +76,17 @@ class OutputHandler:
             data = json.loads(data)
             json.dump(data, f, indent=4)
 
+    @staticmethod
+    def file_reader(filename):
+        ## TODO: refactor file exist check in future
+        if not os.path.exists(filename):
+            raise Exception(f'[!] File {filename} not found')
+        ##
+        
+        with open(filename, 'r') as f:
+            content = f.read()
+            return content
+
 
     def prettify_reqer_result(self, reqer_result):
         temp = {}
