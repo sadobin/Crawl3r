@@ -21,7 +21,7 @@ import config
 
 class PostgresqlConnection:
 
-    def __init__(self, pg_user, pg_pass, target, host='localhost', port=5432):
+    def __init__(self, pg_user, pg_pass, target, pg_host='localhost', pg_port=5432):
         self.output_handler = OutputHandler(target)
 
         now_time = datetime.now().strftime('%Y.%m.%d-%H.%M')
@@ -30,8 +30,8 @@ class PostgresqlConnection:
             'database': self.db_name,
             'user': pg_user,
             'password': pg_pass,
-            'host': host,
-            'port': port,
+            'host': pg_host,
+            'port': pg_port,
         }
 
         # Creating crawler database
