@@ -1,5 +1,4 @@
 #! /usr/bin/python3 
-
 """
     Depth of crawling
     E.g: If it was set to 2, passed URL and all found links in it will be crawled.
@@ -7,9 +6,16 @@
 """
 DEPTH = 0
 
+# Postgres host/port
+PG_HOST = '127.0.0.1'
+PG_PORT = 5432
+
 # Crawl3r directory
 CRAWLER_DIR = "/mnt/d/crawl3r"
 
+EXCLUDED_PATH = [
+    '',
+]
 
 # Number of processes
 PROCESSES = 8
