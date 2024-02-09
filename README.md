@@ -1,7 +1,7 @@
 # Crawl3r
 Crawl3r is a web crawler that is designed to index all request/response headers, defined tags, comments, and links recursively.
 
-Example of crawling python.org with DEPTH of 2:
+Example of crawling python.org:
 ```
 $ crawl3r python.org
 [.] Initialize 10 redis client(s).
@@ -106,7 +106,18 @@ reqer-result.python.org.21-04-29.json
 static-files.python.org.21-04-29.json
 ```
 
-## config.py
+## Setup
+Due to connecting to "postgres" database it is necessary to run with sudo
+```
+sudo bash setup.sh
+```
+
+## Usage
+```
+```
+
+
+## config\.py
 
 **DEPTH**: Define depth of crawling.  
 E.g: If it was set to 2, passed URL and all found links in it will be crawled. Assigning 0 to it, causing crawling the entire domain.
