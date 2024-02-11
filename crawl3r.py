@@ -39,6 +39,7 @@ class Crawl3r:
 
         self.links = np.append(self.links, target)
 
+        # Create database pool
         self.pg_global_pool = PostgresqlConnection(
                 target=self.hostname,
                 pg_user=os.environ['PG_USER'],
@@ -46,6 +47,9 @@ class Crawl3r:
                 pg_host=config.PG_HOST,
                 pg_port=config.PG_PORT,
             )
+        
+        # Create database/tables for target
+        self.pg_global_pool.init_db_tables()
         
         self.output_handler = OutputHandler(self.hostname)
         self.process_generator()
@@ -137,89 +141,108 @@ class Crawl3r:
         self.links = self.new_links.copy()
 
 
-def cmd_arguments():
-    parser = argparse.ArgumentParser(description="Crawl3r Help")
-    
-    ### Base Configuration
-    base_config = parser.add_argument_group("Base Configuration")
-    base_config.add_argument('target', help='Specify the target url')
-    base_config.add_argument('-cd', '--crawler-dir', dest='crawler_dir', help='Specify the base directory')
-    base_config.add_argument('--pghost', help='Specify the PostgreSQL server (default: localhost)')
-    base_config.add_argument('--pgport', help='Specify the PostgreSQL port (default: 5432)', type=int)
-    
-    ### Configuration
-    configs = parser.add_argument_group("Configuration")
-    configs.add_argument('-d', '--depth', help='Depth of crawling')
-    configs.add_argument('-js', '--parse-js', help='Parse javascript during runtime', action="store_true")
-    # Implement to accept regex
-    configs.add_argument('-p', '--process', help='Number of process for multiprocessing (default: 8)', type=int)
-    # TODO: add random user-aget value
-    configs.add_argument('-ua', '--useragent', type=str ,help='Specify the User-Agent (fu, fd, ff, fc, f7, f10, fan, fm, fi, cu, cf, ca, can, cm, ci, e7, e10, ean, em, ei): check the UserAgentParser.py')
-    # TODO: implement list user agent function
-    configs.add_argument('-H', '--header', help='Specify custom headers: Authorization, Cookie, etc')
-    configs.add_argument('-a', '--attrs', help='Custom HTML attributes (in regex formats) to looking for links (default: (href|src|action))')
-    
-    ### Modules
-    modules = parser.add_argument_group("Modules")
-    modules.add_argument('-m', '--module', help='Available modules: ps (PageScraper), dbf (database fetcher)')
-    configs.add_argument('-t', '--tags', help='Specified tags for PageScraper module')
-    modules.add_argument('-r', '--resume', help='Resume the crawling from where the crawl3r stopped (been_crawled.json file is required)')
 
-    ### Scope
-    scope = parser.add_argument_group("Scope Configuration")
-    scope.add_argument('-s', '--subdomains', help='weather crawl the subdomains or not')
-    scope.add_argument('-e', '--exclude-path', help='Exclude specified paths for crawling (e.g. sensitive paths like admin dashboard)')
+class Main():
 
-    ### List Features
-    list_features = parser.add_argument_group("List Features")
-    list_features.add_argument('-lu', '--list-ua', help='List availabe user-agents', action="store_true")
-    list_features.add_argument('-lm', '--list-modules', help='List availabe modules', action="store_true")
+    def __init__(self):
+        target, args = self.cmd_arguments()
 
-    args = parser.parse_args()
+        self.check_envs()       if 'ps' not in args.module else None
+        self.database_fetcher(args.dbn) if 'dbf'    in args.module else None
+
+        try:
+            crawpy = Crawl3r(target)
+        except Exception as e:
+            print(f"\33[31m[!]\33[0m Crawl3r: {e}")
 
 
-    # Edit config.py for defined arguments
-    opts = {
-        'crawler_dir': 'CRAWLER_DIR',
-        'pghost': 'PG_HOST',
-        'pgport': 'PG_PORT',
-        'process': 'PROCESSES',
-        'depth': 'DEPTH',
-        'useragent': '',
-        'header': 'REQUEST_HEADERS',
-        'attrs': 'HTML_ATTRIBUTES',
-        'exclude_path': 'EXCLUDED_PATH',
-        'tags': 'HTML_TAGS',
-    }
-    for cmd_arg, config_opt in opts.items():
-        if 'header' in cmd_arg:
-            name, value = args.header.split(':', maxsplit=1)
-            config.REQUEST_HEADERS.update( {name.strip(): value.strip()} )
-        if 'useragent' in cmd_arg:
-            config.REQUEST_HEADERS.update( {'User-Agent': getattr(args, cmd_arg)} )
-        else:
-            setattr(config, config_opt, getattr(args, cmd_arg))
+    def database_fetcher(self, db_name):
+        self.pg_global_pool = PostgresqlConnection(
+                target=self.hostname,
+                pg_user=os.environ['PG_USER'],
+                pg_pass=os.environ['PG_PASS'],
+                pg_host=config.PG_HOST,
+                pg_port=config.PG_PORT,
+            )
+
+
+    def cmd_arguments(self):
+        parser = argparse.ArgumentParser(description="Crawl3r Help")
         
-        print(f'[===] {cmd_arg}: {getattr(args, cmd_arg)}')
+        ### Base Configuration
+        base_config = parser.add_argument_group("Base Configuration")
+        base_config.add_argument('target', help='Specify the target url')
+        base_config.add_argument('-cd', '--crawler-dir', dest='crawler_dir', help='Specify the base directory')
+        base_config.add_argument('--pghost', help='Specify the PostgreSQL server (default: localhost)')
+        base_config.add_argument('--pgport', help='Specify the PostgreSQL port (default: 5432)', type=int)
+        
+        ### Configuration
+        configs = parser.add_argument_group("Configuration")
+        configs.add_argument('-d', '--depth', help='Depth of crawling')
+        configs.add_argument('-js', '--parse-js', help='Parse javascript during runtime', action="store_true")
+        # Implement to accept regex
+        configs.add_argument('-p', '--process', help='Number of process for multiprocessing (default: 8)', type=int)
+        # TODO: add random user-aget value
+        configs.add_argument('-ua', '--useragent', type=str ,help='Specify the User-Agent (fu, fd, ff, fc, f7, f10, fan, fm, fi, cu, cf, ca, can, cm, ci, e7, e10, ean, em, ei): check the UserAgentParser.py')
+        # TODO: implement list user agent function
+        configs.add_argument('-H', '--header', help='Specify custom headers: Authorization, Cookie, etc')
+        configs.add_argument('-a', '--attrs', help='Custom HTML attributes (in regex formats) to looking for links (default: (href|src|action))')
+        
+        ### Modules
+        modules = parser.add_argument_group("Modules")
+        modules.add_argument('-m', '--module', help='Available modules: ps (PageScraper), dbf (database fetcher)')
+        modules.add_argument('-rs', '--reqer-result', help='Path to the reqer_result.json')
+        modules.add_argument('-dbn', '--db-name', help='database name for dbf module (see modules)')
+        configs.add_argument('-t', '--tags', help='Specified tags for PageScraper module')
+        modules.add_argument('-r', '--resume', help='Resume the crawling from where the crawl3r stopped (been_crawled.json file is required)')
 
-    return args.target
+        ### Scope
+        scope = parser.add_argument_group("Scope Configuration")
+        scope.add_argument('-s', '--subdomains', help='weather crawl the subdomains or not')
+        scope.add_argument('-e', '--exclude-path', help='Exclude specified paths for crawling (e.g. sensitive paths like admin dashboard)')
+
+        ### List Features
+        list_features = parser.add_argument_group("List Features")
+        list_features.add_argument('-lu', '--list-ua', help='List availabe user-agents', action="store_true")
+        list_features.add_argument('-lm', '--list-modules', help='List availabe modules', action="store_true")
+
+        args = parser.parse_args()
 
 
-def check_envs():
-    envs_list = ['PG_USER', 'PG_PASS']
-    for env in envs_list:
-        if not os.environ.get(env): raise Exception(f"The {env} value not defined")
-        setattr(config, env, os.environ.get(env))
+        # Edit config.py for defined arguments
+        opts = {
+            'crawler_dir': 'CRAWLER_DIR',
+            'pghost': 'PG_HOST',
+            'pgport': 'PG_PORT',
+            'process': 'PROCESSES',
+            'depth': 'DEPTH',
+            'useragent': '',
+            'header': 'REQUEST_HEADERS',
+            'attrs': 'HTML_ATTRIBUTES',
+            'exclude_path': 'EXCLUDED_PATH',
+            'tags': 'HTML_TAGS',
+        }
+        
+        for cmd_arg, config_opt in opts.items():
+            if 'header' in cmd_arg:
+                name, value = args.header.split(':', maxsplit=1)
+                config.REQUEST_HEADERS.update( {name.strip(): value.strip()} )
+            if 'useragent' in cmd_arg:
+                config.REQUEST_HEADERS.update( {'User-Agent': getattr(args, cmd_arg)} )
+            else:
+                setattr(config, config_opt, getattr(args, cmd_arg))
+            
+            print(f'[===] {cmd_arg}: {getattr(args, cmd_arg)}')
+
+        return args.target, args
 
 
-def main():
-    check_envs()
-    target = cmd_arguments()
-    try:
-        crawpy = Crawl3r(target)
-    except Exception as e:
-        print(f"\33[31m[!]\33[0m Crawl3r: {e}")
+    def check_envs(self):
+        envs_list = ['PG_USER', 'PG_PASS']
+        for env in envs_list:
+            if not os.environ.get(env): raise Exception(f"The {env} value not defined")
+            setattr(config, env, os.environ.get(env))
 
 
 
-if __name__ == "__main__": main()
+if __name__ == "__main__": Main()
