@@ -17,13 +17,13 @@ import config
 
 class PostgresqlConnection:
 
-    def __init__(self, pg_user, pg_pass, target, pg_host='localhost', pg_port=5432):
+    def __init__(self, pg_user, pg_pass, target, pg_host='localhost', pg_port=5432, db_name=None):
         self.output_handler = OutputHandler(target)
 
         now_time = datetime.now().strftime('%Y.%m.%d-%H.%M')
         self.db_name = f'crawler_{target}_{now_time}'
         self.pg_dsn = {
-            'database': self.db_name,
+            'database': db_name if db_name else self.db_name,
             'user': pg_user,
             'password': pg_pass,
             'host': pg_host,

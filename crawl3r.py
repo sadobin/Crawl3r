@@ -102,8 +102,8 @@ class Crawl3r:
                 # Update self.been_crawled and get new links from redis_clients
                 self.links_handler()
 
-                if count == config.DEPTH:
-                    break
+                # Break the app if depth is met
+                if count == config.DEPTH: break
 
         except KeyboardInterrupt:
             print(f"\33[31m[!]\33[0m Keyboard Interrupt")
@@ -138,6 +138,7 @@ class Crawl3r:
     def links_handler(self):
         # self.been_crawled += self.links
         self.been_crawled = np.append(self.been_crawled, self.links)
+        self.pg_global_pool.insert_data('been_crawled', self.been_crawled) if len(self.been_crawled) else None
         self.links = self.new_links.copy()
 
 
@@ -147,23 +148,33 @@ class Main():
     def __init__(self):
         target, args = self.cmd_arguments()
 
-        self.check_envs()       if 'ps' not in args.module else None
-        self.database_fetcher(args.dbn) if 'dbf'    in args.module else None
+        self.check_envs() if 'ps' not in args.module else None
+        
+        self.database_fetcher(args.db_name) if 'dbf' in args.module else None
 
         try:
-            crawpy = Crawl3r(target)
+            Crawl3r(target)
         except Exception as e:
             print(f"\33[31m[!]\33[0m Crawl3r: {e}")
 
 
     def database_fetcher(self, db_name):
-        self.pg_global_pool = PostgresqlConnection(
-                target=self.hostname,
+        # db_name example: crawler_redacted.com_2023.11.20-23.44
+        temp = db_name.split('_')
+        hostname, date = temp[1], temp[2]
+        
+        pg_global_pool = PostgresqlConnection(
+                target=hostname,
                 pg_user=os.environ['PG_USER'],
                 pg_pass=os.environ['PG_PASS'],
                 pg_host=config.PG_HOST,
                 pg_port=config.PG_PORT,
+                db_name=db_name,
             )
+        
+        output_handler = OutputHandler(hostname, date)
+        output_handler.final_result(pg_global_pool)
+        sys.exit(0)
 
 
     def cmd_arguments(self):
@@ -224,15 +235,16 @@ class Main():
         }
         
         for cmd_arg, config_opt in opts.items():
-            if 'header' in cmd_arg:
-                name, value = args.header.split(':', maxsplit=1)
-                config.REQUEST_HEADERS.update( {name.strip(): value.strip()} )
-            if 'useragent' in cmd_arg:
-                config.REQUEST_HEADERS.update( {'User-Agent': getattr(args, cmd_arg)} )
-            else:
-                setattr(config, config_opt, getattr(args, cmd_arg))
-            
-            print(f'[===] {cmd_arg}: {getattr(args, cmd_arg)}')
+            if getattr(args, cmd_arg):
+                if 'header' in cmd_arg:
+                    name, value = args.header.split(':', maxsplit=1)
+                    config.REQUEST_HEADERS.update( {name.strip(): value.strip()} )
+                if 'useragent' in cmd_arg:
+                    config.REQUEST_HEADERS.update( {'User-Agent': getattr(args, cmd_arg)} )
+                else:
+                    setattr(config, config_opt, getattr(args, cmd_arg))
+                
+                print(f'[===] {cmd_arg}: {getattr(args, cmd_arg)}')
 
         return args.target, args
 

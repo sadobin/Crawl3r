@@ -16,9 +16,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 class OutputHandler:
 
-    def __init__(self, hostname):
+    def __init__(self, hostname, date=None):
         self.hostname = hostname
-        self.dir = self.create_target_dir(hostname)
+        self.dir = self.create_target_dir(hostname, date=date)
         # date = datetime.datetime.fromtimestamp(time.time()).strftime("%y-%m-%d")
         date = datetime.now().strftime("%y.%m.%d")
         
@@ -32,7 +32,7 @@ class OutputHandler:
         print(f"\33[36m[ {time_} ]\33[0m {log}")
 
 
-    def final_result(self, pg_global_pool, been_crawled):
+    def final_result(self, pg_global_pool, been_crawled=None):
         # self.redis_pool = redis_pool
         # reqer_result = self.redis_fetcher('reqer_result')
         # reqer_result = self.prettify_reqer_result(reqer_result)
@@ -44,6 +44,7 @@ class OutputHandler:
         conn = pg_global_pool.create_connection()
         reqer_result = pg_global_pool.fetch_data(conn, 'reqer_result')
         static_files = pg_global_pool.fetch_data(conn, 'static_files')
+        been_crawled = pg_global_pool.fetch_data(conn, 'been_crawled') if not been_crawled else been_crawled
         all_paths = list(Counter(been_crawled + static_files).keys())
 
         self.file_writer('reqer-result', reqer_result)
@@ -52,12 +53,12 @@ class OutputHandler:
         self.file_writer('been-crawled', been_crawled)
 
 
-    def create_target_dir(self, hostname):
+    def create_target_dir(self, hostname, date):
         """
             Path to save the result
         """
-        now_time = datetime.now().strftime('%Y.%m.%d-%H.%M')
-        home_dir = subprocess.check_output('echo $HOME', shell=True).decode().strip()
+        now_time = datetime.now().strftime('%Y.%m.%d-%H.%M') if not date else date
+        # home_dir = subprocess.check_output('echo $HOME', shell=True).decode().strip()
         if not config.CRAWLER_DIR:
             print('[!] Set the CRAWLER_DIR in config.py')
             sys.exit(1)
@@ -78,7 +79,7 @@ class OutputHandler:
 
     @staticmethod
     def file_reader(filename):
-        ## TODO: refactor file exist check in future
+        ## TODO: refactor file existence check in future
         if not os.path.exists(filename):
             raise Exception(f'[!] File {filename} not found')
         ##
