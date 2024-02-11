@@ -55,7 +55,7 @@ class Reqer:
 					headers=self.request_headers, 
 					allow_redirects=False, 
 					timeout=5,
-                                        verify=False
+                    verify=False
 					)
 
 				got_redirect = response.is_redirect
@@ -82,19 +82,19 @@ class Reqer:
 		response_headers = dict( res_hp.get_headers() )
 		request_headers  = dict( response.request.headers )
 
-		ps = PageScraper( response.text )
-		comments = ps.get_comments()
+		ps = PageScraper( page_content=response.text )
 		links    = ps.get_links()
-		tags     = ps.get_tags()
+		# comments = ps.get_comments()
+		# tags     = ps.get_tags()
 
 		self.result[response.request.url] = {}
 		self.result[response.request.url]['status-code']       = response.status_code
 		self.result[response.request.url]['request-headers']   = request_headers
 		self.result[response.request.url]['response-headers']  = response_headers
 		self.result[response.request.url]['response']          = response.text
-		self.result[response.request.url]['comments']          = comments
+		# self.result[response.request.url]['comments']          = comments
 		self.result[response.request.url]['links']             = links
-		self.result[response.request.url]['tags']              = tags
+		# self.result[response.request.url]['tags']              = tags
 
 
 	def redirection_handler(self, response):
