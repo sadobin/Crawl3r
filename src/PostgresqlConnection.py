@@ -6,17 +6,13 @@ from datetime import datetime
 import copy
 from collections import Counter
 
-
 import psycopg2
 from psycopg2 import pool
-
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from OutputHandler import OutputHandler
 import config
-
-
 
 
 class PostgresqlConnection:
@@ -33,9 +29,6 @@ class PostgresqlConnection:
             'host': pg_host,
             'port': pg_port,
         }
-
-        # Creating crawler database
-        self.create_db(self.db_name, pg_user)
 
         # self.pg_global_conn = psycopg2.connect(
         #     user=pg_user,
@@ -67,6 +60,10 @@ class PostgresqlConnection:
         #     max_size=config.PROCESSES
         # )
 
+
+    def init_db_tables(self):
+        # Creating crawler database
+        self.create_db(self.db_name, self.pg_dsn['user'])
         conn = self.create_connection(**self.pg_dsn)
         self.create_tables(conn)
         conn.close()
@@ -106,7 +103,6 @@ class PostgresqlConnection:
             # Close the cursor and connection
             cursor.close()
             conn.close()
-
 
 
     def create_tables(self, conn):
@@ -160,9 +156,6 @@ class PostgresqlConnection:
             for l in res:   r += list(l)[0]
             r = list(Counter(r).keys())
             return r
-            
-
-
 
 
     def insert_data(self, table, data):
@@ -222,8 +215,6 @@ class PostgresqlConnection:
 
     def putaway_pg_conn(self, conn):
         self.pg_global_conn.putconn(conn)
-
-
 
 
 
