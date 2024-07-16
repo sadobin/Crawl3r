@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 import copy
 from collections import Counter
+import numpy as np
 
 import psycopg2
 from psycopg2 import pool
@@ -136,26 +137,50 @@ class PostgresqlConnection:
     def fetch_data(self, conn, table):
         fetch_query = {
             # "reqer_result": f"INSERT INTO reqer_result (status, req_headers, res_headers, res, extras) VALUES (%d,%s,%s,%s,%s);",
-            "reqer_result": "SELECT * FROM reqer_result;",
+            "reqer_result": "SELECT * FROM reqer_result LIMIT 500 OFFSET _OFFSET_;",
             "static_files": "SELECT * FROM static_files;",
             # "all_paths": "SELECT * FROM all_paths;",
             "been_crawled": "SELECT * FROM been_crawled;",
         }
+        
+        try:
+            query = fetch_query.get(table)
+            res = []
 
-        query = fetch_query.get(table)
-        cursor = conn.cursor()
-        cursor.execute(query)
-        res = cursor.fetchall()
+            if "reqer_result" not in table: 
+                cursor = conn.cursor()
+                cursor.execute(query)
+                print(f"fetchall {table}")
+                res = cursor.fetchall()
+            
+            else:
+                # res = np.array([])
+                offset = 0
+                counter = 0
+                while True:
+                    cursor = conn.cursor()
+                    query = fetch_query.get(table).replace("_OFFSET_", str(offset))
+                    cursor.execute(query)
+                    new_res = cursor.fetchall()
+                    # res = np.append(res, new_res)
+                    res += new_res
+                    # globals()[f"res_{counter}"] = new_res
+                    # print(f"Res Length: {len( globals().get(f'res_{counter}') )}, Offset: {offset}")
+                    offset  += 500
+                    counter += 1
+                    if not len(new_res): break
 
-        if table == 'reqer_result':
-            r = {}
-            for l in res:   r.update(dict(l[0]))
-            return r
-        else:
-            r = []
-            for l in res:   r += list(l)[0]
-            r = list(Counter(r).keys())
-            return r
+            if table == 'reqer_result':
+                r = {}
+                for l in res:   r.update(dict(l[0]))
+                return r
+            else:
+                r = []
+                for l in res:   r += list(l)[0]
+                r = list(Counter(r).keys())
+                return r
+        except Exception as e:
+            logging.info(f"Error (fetch_data function): {e}")
 
 
     def insert_data(self, table, data):
