@@ -12,6 +12,7 @@ from src.LinkParser import LinkParser
 from src.RedisConnection import RedisConnection
 from src.PostgresqlConnection import PostgresqlConnection
 from src.OutputHandler import OutputHandler
+from src.PageScraper import PageScraper
 import config
 
 
@@ -20,7 +21,7 @@ class Crawl3r:
 
     def __init__(self, target):
 
-        sys.setrecursionlimit(100000)
+        sys.setrecursionlimit(1000000)
         os.system("ulimit -n 8192")  # Increase user limitation
 
         if target.startswith("http"):
@@ -138,7 +139,7 @@ class Crawl3r:
     def links_handler(self):
         # self.been_crawled += self.links
         self.been_crawled = np.append(self.been_crawled, self.links)
-        self.pg_global_pool.insert_data('been_crawled', self.been_crawled) if len(self.been_crawled) else None
+        self.pg_global_pool.insert_data('been_crawled', self.been_crawled.tolist()) if len(self.been_crawled) else None
         self.links = self.new_links.copy()
 
 
@@ -148,9 +149,18 @@ class Main():
     def __init__(self):
         target, args = self.cmd_arguments()
 
-        self.check_envs() if 'ps' not in args.module else None
-        
-        self.database_fetcher(args.db_name) if 'dbf' in args.module else None
+        # PageScraper module implementation
+        if args.module and 'ps' in args.module:
+            reqer_result = OutputHandler.file_reader(args.reqer_result)
+            reqer_result_path = args.reqer_result
+            PageScraper(reqer_result=reqer_result, reqer_result_path=reqer_result_path)
+            sys.exit(0)
+
+        # DatabaseFetcher implementation
+        if args.module and 'dbf' in args.module:
+            self.check_envs()
+            self.database_fetcher(args.db_name)
+            sys.exit(0)
 
         try:
             Crawl3r(target)
@@ -172,7 +182,8 @@ class Main():
                 db_name=db_name,
             )
         
-        output_handler = OutputHandler(hostname, date)
+        target_dir = db_name.replace('crawler_', '')
+        output_handler = OutputHandler(hostname, date, target_dir=target_dir)
         output_handler.final_result(pg_global_pool)
         sys.exit(0)
 
@@ -182,7 +193,7 @@ class Main():
         
         ### Base Configuration
         base_config = parser.add_argument_group("Base Configuration")
-        base_config.add_argument('target', help='Specify the target url')
+        base_config.add_argument('target', nargs='?', help='Specify the target url')
         base_config.add_argument('-cd', '--crawler-dir', dest='crawler_dir', help='Specify the base directory')
         base_config.add_argument('--pghost', help='Specify the PostgreSQL server (default: localhost)')
         base_config.add_argument('--pgport', help='Specify the PostgreSQL port (default: 5432)', type=int)
@@ -204,7 +215,7 @@ class Main():
         modules.add_argument('-m', '--module', help='Available modules: ps (PageScraper), dbf (database fetcher)')
         modules.add_argument('-rs', '--reqer-result', help='Path to the reqer_result.json')
         modules.add_argument('-dbn', '--db-name', help='database name for dbf module (see modules)')
-        configs.add_argument('-t', '--tags', help='Specified tags for PageScraper module')
+        modules.add_argument('-t', '--tags', help='Specified tags for PageScraper module')
         modules.add_argument('-r', '--resume', help='Resume the crawling from where the crawl3r stopped (been_crawled.json file is required)')
 
         ### Scope
