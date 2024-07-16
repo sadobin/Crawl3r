@@ -60,22 +60,32 @@ class PageScraper:
         parsed_url = urlparse(url)
         # url_path = parsed_url.path.rsplit('/', maxsplit=1)[-1]
         url_path = parsed_url.path
+        # Check if the url_path ends with slash or not
         url_path = url_path[:-1] if url_path.endswith('/') else url_path        
-
-        if '.' in url_path.rsplit('/', maxsplit=1)[-1]:  # file has extension
+        
+        # file has extension
+        if '.' in url_path.rsplit('/', maxsplit=1)[-1]:
             file_dir = url_path.rsplit('/', maxsplit=1)[0]
+            print(f"file_dir: {file_dir}")
             file_name = url_path.rsplit('/', maxsplit=1)[-1]
+            print(f"file_name: {file_name}")
+        
+        # file without extension
         else:
             file_dir = url_path
+            print(f"file_dir: {file_dir}")
             file_name = file_dir.rsplit('/', maxsplit=1)[-1] + '.html'
+            print(f"file_name: {file_name}")
+
+        file_name = 'HOMEPAGE.html' if file_name == '.html' else file_name
 
         file_dir  = base_path + '/' + file_dir
         file_dir = file_dir.replace('//', '/')
+        print(f"FINAL file_dir: {file_dir}")
         file_path = file_dir + '/' + file_name
         file_path +=  f'?{parsed_url.query}' if parsed_url.query else ''
-
-        print(f'-- {file_dir}')
-        print(f'-- {file_path}')
+        print(f"FINAL file_path: {file_path}")
+        print('---')
 
         mkdir_cmd = f""" mkdir -p "{file_dir}" """
         touch_cmd = f""" touch  "{file_path}" """
@@ -87,7 +97,6 @@ class PageScraper:
             f.write(content)
 
 
-
     def find_links(self, page_content):
         """
             Find links from specified attributes
@@ -95,7 +104,7 @@ class PageScraper:
         
         links = []
 
-        page_content = str(page_content).replace('>', '> ')
+        page_content = str(page_content).lower().replace('>', '> ')
         page_content = page_content.split(' ')
         match_ptrn   = f"^{HTML_ATTRIBUTES}=(\"|').+(\"|')"
         remove_ptrn  = f"^{HTML_ATTRIBUTES}="
